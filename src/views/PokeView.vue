@@ -1,42 +1,42 @@
 <script setup>
-import axios from "axios";
-import { ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import { useGetData } from "@/composables/getData";
+import { useFavoritosStore } from "@/store/favoritos";
 
 const route = useRoute();
 const router = useRouter();
+const useFavoritos = useFavoritosStore();
 
-const poke = ref({});
+const { add, findPoke } = useFavoritos;
+
+const { getData, data, loading, error } = useGetData();
 
 const back = () => {
   router.push("/pokemons");
 };
 
-const getData = async () => {
-  try {
-    const { data } = await axios.get(
-      `https://pokeapi.co/api/v2/pokemon/${route.params.name}`
-    );
-    console.log(data);
-    
-    poke.value = data;
-  } catch (error) {
-    console.error(error);
-    poke.value = null;
-  }
-
-  
-};
-
-
-getData();
+getData(`https://pokeapi.co/api/v2/pokemon/${route.params.name}`);
 </script>
 
 <template>
-  <div v-if="poke">
-    <h1>Poke name: {{ $route.params.name }}</h1>
-    <img :src="poke.sprites?.front_default" alt="" />
+  <p v-if="loading">Cargando información...</p>
+  <div class="alert alert-danger mt-2" v-if="error">{{ error }}</div>
+  <div v-if="data">
+    <h1 class="mt-2">Nombre Pokemon: {{ ($route.params.name).toUpperCase() }}</h1>
+    <img :src="data.sprites?.front_default" alt="" />
+    <h2> Numero pokedex: {{ data.id }} </h2>
+    <p>Tipo(s):</p>
+    <ul class="list-group ">
+      <li class="list-group-item" v-for="(type) in (data.types)" :key="type.slot"> {{ type.type.name }} </li>
+    </ul>
   </div>
-  <h1 v-else>No existe el pokemon</h1>
-  <button @click="back" class="btn btn-outline-primary">volver</button>
+
+  <div class="mt-4">
+    <button @click=" back " class="btn btn-primary me-2">Volver</button>
+    <button :disabled=" data ? findPoke(data.name) : true " class="btn btn-primary" @click="add(data)">
+      Agregar Favoritos
+    </button>
+  </div>
 </template>
+
+<!-- -->
